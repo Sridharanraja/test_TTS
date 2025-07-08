@@ -1,0 +1,26 @@
+# Project Dependencies for E2-F5-TTS Application
+# Copy these to your requirements.txt file for manual installation
+
+# Core TTS and AI Libraries
+f5-tts>=1.1.5
+groq>=0.11.0
+torch>=2.0.0
+torchaudio>=2.0.0
+
+# Audio Processing
+librosa>=0.10.0
+soundfile>=0.12.0
+numpy>=1.24.0
+
+# Web Framework
+streamlit>=1.28.0
+
+# System Dependencies (install via system package manager):
+# - ffmpeg (required for audio processing)
+# - python3.10+ (Python 3.10 or higher required)
+
+# Installation Notes:
+# 1. Install PyTorch first with appropriate CUDA version if using GPU
+# 2. For CPU-only: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+# 3. For CUDA: pip install torch torchaudio --index-url https://download.pytorch.org/whl/cu118
+# 4. Then install other dependencies: pip install -r requirements.txt
