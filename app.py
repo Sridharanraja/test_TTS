@@ -151,6 +151,21 @@ def main():
                 for i, sample in enumerate(sample_texts):
                     if st.button(f"Use Sample {i+1}", key=f"sample_{i}"):
                         st.session_state.current_input_text = sample
+                        
+        # Multi-Speech examples (show regardless of AI availability)
+        if mode == "Multi-Speech (Podcast)":
+            st.subheader("💡 Multi-Speech Format")
+            st.info("Use [speaker_name] tags to assign different voices to different speakers")
+            
+            multi_speech_samples = [
+                "[Alice] Welcome to our technology podcast. [Bob] Thanks for having me on the show today.",
+                "[Host] Let's discuss artificial intelligence. [Expert] AI is transforming every industry we know.",
+                "[Narrator] Once upon a time in a distant land. [Character] I must find the magical crystal!"
+            ]
+            
+            for i, sample in enumerate(multi_speech_samples):
+                if st.button(f"Use Multi-Speech Sample {i+1}", key=f"multi_sample_{i}"):
+                    st.session_state.current_input_text = sample
     
     with col2:
         st.header("🎵 Audio Reference")

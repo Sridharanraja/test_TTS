@@ -220,18 +220,30 @@ class TTSService:
             raise
     
     def _format_for_multispeech(self, text: str) -> str:
-        """Format text for multi-speech mode"""
-        # Add speaker tags for podcast-style generation
-        # This is a simplified implementation
-        sentences = text.split('. ')
-        formatted_text = ""
+        """Format text for multi-speech mode using F5-TTS speaker tag format"""
+        import re
+        
+        # Check if text already has speaker tags [name]
+        speaker_pattern = r'\[([^\]]+)\]'
+        
+        if re.search(speaker_pattern, text):
+            # Text already has speaker tags, return as-is
+            logger.info("Text already contains speaker tags, using as-is")
+            return text
+        
+        # Auto-format text by splitting into dialogue and adding speaker tags
+        sentences = [s.strip() for s in text.split('.') if s.strip()]
+        formatted_lines = []
+        speakers = ["Alice", "Bob", "Charlie", "Diana"]  # Default speaker names
         
         for i, sentence in enumerate(sentences):
-            if sentence.strip():
-                speaker = "Speaker A" if i % 2 == 0 else "Speaker B"
-                formatted_text += f"[{speaker}] {sentence.strip()}. "
+            if sentence:
+                speaker = speakers[i % len(speakers)]
+                formatted_lines.append(f"[{speaker}] {sentence}.")
         
-        return formatted_text.strip()
+        formatted_text = " ".join(formatted_lines)
+        logger.info(f"Formatted text for multi-speech: {formatted_text[:100]}...")
+        return formatted_text
     
     def _save_audio(self, audio_tensor: torch.Tensor) -> str:
         """Save generated audio tensor to file"""
