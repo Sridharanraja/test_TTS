@@ -100,15 +100,21 @@ def main():
     with col1:
         st.header("📝 Text Input")
         
+        # Initialize input_text
+        input_text = ""
+        
         # Text input tabs
         text_tab1, text_tab2 = st.tabs(["Manual Input", "AI Generate"])
         
         with text_tab1:
-            input_text = st.text_area(
+            manual_text = st.text_area(
                 "Enter text to synthesize",
                 height=150,
-                placeholder="Type your text here..."
+                placeholder="Type your text here...",
+                key="manual_text_input"
             )
+            if manual_text:
+                input_text = manual_text
         
         with text_tab2:
             # Groq AI text generation
@@ -124,12 +130,17 @@ def main():
                         with st.spinner("Generating text with Groq AI..."):
                             try:
                                 generated_text = services['groq_service'].generate_text(prompt)
-                                st.text_area("Generated Text", value=generated_text, height=150, key="generated_text")
-                                input_text = generated_text
+                                st.session_state.generated_text = generated_text
+                                st.text_area("Generated Text", value=generated_text, height=150, key="generated_text_display")
                             except Exception as e:
                                 st.error(f"Text generation failed: {str(e)}")
                     else:
                         st.warning("Please enter a prompt for AI text generation")
+                
+                # Use generated text if available
+                if 'generated_text' in st.session_state:
+                    input_text = st.session_state.generated_text
+                    
             else:
                 st.warning("⚠️ AI Text Generation Unavailable")
                 st.info("Groq API key not configured. You can still use manual text input or add your API key to enable AI features.")
@@ -154,6 +165,9 @@ def main():
     with col2:
         st.header("🎵 Audio Reference")
         
+        # Initialize ref_text
+        ref_text = ""
+        
         # Audio input tabs
         audio_tab1, audio_tab2 = st.tabs(["Upload Audio", "Record Audio"])
         
@@ -171,7 +185,8 @@ def main():
                 ref_text = st.text_area(
                     "Transcription of reference audio (optional)",
                     height=100,
-                    placeholder="Enter what is said in the reference audio (leave empty for auto-transcription)..."
+                    placeholder="Enter what is said in the reference audio (leave empty for auto-transcription)...",
+                    key="ref_text_input"
                 )
         
         with audio_tab2:
@@ -188,6 +203,10 @@ def main():
     
     # Synthesis Section
     st.header("🚀 Speech Synthesis")
+    
+    # Show what text will be used for synthesis
+    if input_text:
+        st.info(f"**Text to synthesize:** {input_text[:100]}{'...' if len(input_text) > 100 else ''}")
     
     # Validation and synthesis
     synthesis_col1, synthesis_col2, synthesis_col3 = st.columns([2, 1, 2])
