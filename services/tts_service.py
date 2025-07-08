@@ -157,12 +157,11 @@ class TTSService:
             if hasattr(self, 'f5_api') and self.f5_api is not None:
                 logger.info(f"Generating speech with {model_name} using F5TTS API...")
                 
-                # Use the API's infer method
+                # Use the API's infer method (without model parameter)
                 generated_audio, sample_rate = self.f5_api.infer(
                     ref_file=ref_audio_path,
                     ref_text=ref_text,
                     gen_text=gen_text,
-                    model=model_name.replace("_v1", "").replace("-", "").lower(),
                     remove_silence=True
                 )
                 
