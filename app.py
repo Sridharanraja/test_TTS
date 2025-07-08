@@ -93,6 +93,7 @@ def main():
             nfe_steps = st.slider("NFE Steps", 8, 32, 16, help="Higher values improve quality but increase processing time")
             cfg_strength = st.slider("CFG Strength", 0.5, 3.0, 2.0, step=0.1, help="Controls adherence to input text")
             sway_sampling_coef = st.slider("Sway Sampling", -1.0, 1.0, -1.0, step=0.1, help="Sampling coefficient for generation")
+            speed_factor = st.slider("Speech Speed", 0.5, 2.0, 1.0, step=0.1, help="Adjust the speed of generated audio (1.0 = normal speed)")
     
     # Main content area
     col1, col2 = st.columns([1, 1])
@@ -255,6 +256,11 @@ def main():
                         mode=mode
                     )
                     
+                    # Apply speed adjustment if needed
+                    if speed_factor != 1.0:
+                        st.info(f"Adjusting audio speed to {speed_factor}x...")
+                        output_audio = services['audio_service'].adjust_audio_speed(output_audio, speed_factor)
+                    
                     # Display results
                     st.success("Speech synthesis completed!")
                     
@@ -272,10 +278,10 @@ def main():
                         )
                     
                     # Cleanup temporary files
-                    if os.path.exists(audio_path) and uploaded_file:
-                        os.unlink(audio_path)
-                    if os.path.exists(processed_audio_path):
-                        os.unlink(processed_audio_path)
+                    temp_files = [audio_path, processed_audio_path]
+                    if uploaded_file and os.path.exists(audio_path):
+                        temp_files.append(audio_path)
+                    services['audio_service'].cleanup_temp_files(temp_files)
                         
                 except Exception as e:
                     st.error(f"Synthesis failed: {str(e)}")

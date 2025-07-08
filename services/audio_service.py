@@ -220,6 +220,41 @@ class AudioService:
         except Exception as e:
             return False, f"Audio validation failed: {str(e)}"
     
+    def adjust_audio_speed(self, audio_path: str, speed_factor: float) -> str:
+        """
+        Adjust the speed of audio file
+        
+        Args:
+            audio_path: Path to input audio file
+            speed_factor: Speed multiplier (1.0 = normal, 0.5 = half speed, 2.0 = double speed)
+            
+        Returns:
+            Path to speed-adjusted audio file
+        """
+        try:
+            # If no speed change needed, return original
+            if abs(speed_factor - 1.0) < 0.01:
+                return audio_path
+                
+            # Load audio
+            audio_data, sample_rate = self._load_audio(audio_path)
+            
+            # Adjust speed using time-stretching (change speed without changing pitch)
+            import librosa
+            
+            # Apply time stretching
+            stretched_audio = librosa.effects.time_stretch(audio_data, rate=speed_factor)
+            
+            # Save the speed-adjusted audio
+            output_path = self._save_processed_audio(stretched_audio)
+            
+            logger.info(f"Speed adjusted audio saved: {output_path} (factor: {speed_factor}x)")
+            return output_path
+                
+        except Exception as e:
+            logger.warning(f"Failed to adjust audio speed, using original: {e}")
+            return audio_path  # Return original if speed adjustment fails
+    
     def cleanup_temp_files(self, file_paths: list):
         """Clean up temporary audio files"""
         for file_path in file_paths:
