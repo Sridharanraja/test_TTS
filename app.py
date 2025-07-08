@@ -238,6 +238,10 @@ def main():
                     # Preprocess audio
                     processed_audio_path = services['audio_service'].preprocess_audio(audio_path)
                     
+                    # Debug logging
+                    st.write(f"DEBUG: About to synthesize with text: '{input_text}'")
+                    st.write(f"DEBUG: Text length: {len(input_text)}")
+                    
                     # Synthesize speech
                     output_audio = services['tts_service'].synthesize(
                         model_name=selected_model,
