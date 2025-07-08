@@ -23,14 +23,15 @@ class GroqService:
         try:
             if not self.api_key:
                 logger.warning("GROQ_API_KEY not found in environment variables")
-                raise ValueError("Groq API key is required")
+                self.client = None
+                return
             
             self.client = Groq(api_key=self.api_key)
             logger.info("Groq client initialized successfully")
             
         except Exception as e:
             logger.error(f"Failed to initialize Groq client: {e}")
-            raise
+            self.client = None
     
     def generate_text(
         self,

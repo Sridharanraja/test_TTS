@@ -112,23 +112,44 @@ def main():
         
         with text_tab2:
             # Groq AI text generation
-            prompt = st.text_area(
-                "Describe what you want to generate",
-                height=100,
-                placeholder="E.g., 'Write a professional product announcement for a new smartphone'"
-            )
-            
-            if st.button("Generate Text with AI", type="secondary"):
-                if prompt:
-                    with st.spinner("Generating text with Groq AI..."):
-                        try:
-                            generated_text = services['groq_service'].generate_text(prompt)
-                            st.text_area("Generated Text", value=generated_text, height=150, key="generated_text")
-                            input_text = generated_text
-                        except Exception as e:
-                            st.error(f"Text generation failed: {str(e)}")
-                else:
-                    st.warning("Please enter a prompt for AI text generation")
+            if services['groq_service'].is_available():
+                prompt = st.text_area(
+                    "Describe what you want to generate",
+                    height=100,
+                    placeholder="E.g., 'Write a professional product announcement for a new smartphone'"
+                )
+                
+                if st.button("Generate Text with AI", type="secondary"):
+                    if prompt:
+                        with st.spinner("Generating text with Groq AI..."):
+                            try:
+                                generated_text = services['groq_service'].generate_text(prompt)
+                                st.text_area("Generated Text", value=generated_text, height=150, key="generated_text")
+                                input_text = generated_text
+                            except Exception as e:
+                                st.error(f"Text generation failed: {str(e)}")
+                    else:
+                        st.warning("Please enter a prompt for AI text generation")
+            else:
+                st.warning("⚠️ AI Text Generation Unavailable")
+                st.info("Groq API key not configured. You can still use manual text input or add your API key to enable AI features.")
+                
+                # Show sample prompts as static suggestions
+                st.subheader("💡 Sample Text Ideas")
+                sample_texts = [
+                    "Welcome to our revolutionary new product that will change the way you work and live.",
+                    "Today, we're announcing exciting updates to our platform that will enhance your experience.",
+                    "Join us as we explore the fascinating world of artificial intelligence and its applications.",
+                    "This is a story about innovation, creativity, and the power of human imagination."
+                ]
+                
+                for i, sample in enumerate(sample_texts):
+                    if st.button(f"Use Sample {i+1}", key=f"sample_{i}"):
+                        st.session_state.sample_text = sample
+                
+                if 'sample_text' in st.session_state:
+                    st.text_area("Selected Sample Text", value=st.session_state.sample_text, height=100, key="sample_display")
+                    input_text = st.session_state.sample_text
     
     with col2:
         st.header("🎵 Audio Reference")
