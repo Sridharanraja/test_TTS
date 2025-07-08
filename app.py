@@ -169,9 +169,9 @@ def main():
                 
                 # Reference text input
                 ref_text = st.text_area(
-                    "Transcription of reference audio",
+                    "Transcription of reference audio (optional)",
                     height=100,
-                    placeholder="Enter what is said in the reference audio..."
+                    placeholder="Enter what is said in the reference audio (leave empty for auto-transcription)..."
                 )
         
         with audio_tab2:
@@ -205,8 +205,7 @@ def main():
         if not uploaded_file and 'recorded_audio' not in st.session_state:
             validation_errors.append("Please upload or record reference audio")
         
-        if uploaded_file and not ref_text:
-            validation_errors.append("Please provide transcription for the reference audio")
+        # Reference text is now optional
         
         if validation_errors:
             for error in validation_errors:

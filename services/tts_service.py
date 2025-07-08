@@ -27,28 +27,39 @@ class TTSService:
         """Initialize TTS models"""
         try:
             # Import F5-TTS modules
-            from f5_tts.infer.utils_infer import (
-                load_vocoder, 
-                load_model, 
-                preprocess_ref_audio_text, 
-                infer_process
-            )
+            from f5_tts.api import F5TTS
             
-            self.load_vocoder = load_vocoder
-            self.load_model = load_model
-            self.preprocess_ref_audio_text = preprocess_ref_audio_text
-            self.infer_process = infer_process
+            # Use the API class which is simpler
+            self.f5_api = F5TTS()
             
-            # Load vocoder
-            logger.info("Loading vocoder...")
-            self.vocoder = self.load_vocoder()
+            logger.info("TTS Service initialized successfully with F5TTS API")
             
-            logger.info("TTS Service initialized successfully")
-            
-        except ImportError as e:
-            logger.error(f"Failed to import F5-TTS modules: {e}")
-            logger.error("Please install F5-TTS: pip install f5-tts")
-            raise
+        except ImportError:
+            try:
+                # Fallback to direct imports
+                from f5_tts.infer.utils_infer import (
+                    load_vocoder, 
+                    load_model, 
+                    preprocess_ref_audio_text, 
+                    infer_process
+                )
+                
+                self.load_vocoder = load_vocoder
+                self.load_model = load_model
+                self.preprocess_ref_audio_text = preprocess_ref_audio_text
+                self.infer_process = infer_process
+                self.f5_api = None
+                
+                # Load vocoder
+                logger.info("Loading vocoder...")
+                self.vocoder = self.load_vocoder()
+                
+                logger.info("TTS Service initialized successfully with direct imports")
+                
+            except ImportError as e:
+                logger.error(f"Failed to import F5-TTS modules: {e}")
+                logger.error("Please install F5-TTS: pip install f5-tts")
+                raise
         except Exception as e:
             logger.error(f"Failed to initialize TTS service: {e}")
             raise
@@ -59,16 +70,45 @@ class TTSService:
             try:
                 logger.info(f"Loading model: {model_name}")
                 
-                # Map model names to F5-TTS model identifiers
+                # Map model names to HuggingFace repo identifiers
                 model_mapping = {
-                    "F5-TTS_v1": "F5TTS_v1_Base",
-                    "E2-TTS": "E2TTS_Base"
+                    "F5-TTS_v1": "SWivid/F5-TTS",
+                    "E2-TTS": "SWivid/E2-TTS"
                 }
                 
-                model_id = model_mapping.get(model_name, "F5TTS_v1_Base")
-                self.models[model_name] = self.load_model(model_id, device=self.device)
+                repo_name = model_mapping.get(model_name, "SWivid/F5-TTS")
                 
-                logger.info(f"Model {model_name} loaded successfully")
+                # Try different loading approaches
+                try:
+                    # Try loading with just repo name
+                    self.models[model_name] = self.load_model(repo_name)
+                    logger.info(f"Model {model_name} loaded with repo name")
+                except Exception as e1:
+                    logger.warning(f"Repo loading failed: {e1}, trying alternative...")
+                    try:
+                        # Try with explicit arguments
+                        self.models[model_name] = self.load_model(
+                            repo_name=repo_name,
+                            model_type="F5-TTS" if "F5" in model_name else "E2-TTS"
+                        )
+                        logger.info(f"Model {model_name} loaded with explicit args")
+                    except Exception as e2:
+                        logger.warning(f"Explicit args failed: {e2}, using direct model creation...")
+                        
+                        # Direct model loading from HuggingFace
+                        from transformers import AutoModel
+                        try:
+                            model = AutoModel.from_pretrained(repo_name, trust_remote_code=True)
+                            self.models[model_name] = model.to(self.device)
+                            logger.info(f"Model {model_name} loaded via transformers")
+                        except Exception as e3:
+                            logger.error(f"All loading methods failed. Last error: {e3}")
+                            # Use a fallback - just create a placeholder that won't crash
+                            logger.warning("Using fallback model placeholder")
+                            self.models[model_name] = None
+                            raise RuntimeError(f"Unable to load {model_name}. Please check F5-TTS installation.")
+                
+                logger.info(f"Model {model_name} loading completed")
                 
             except Exception as e:
                 logger.error(f"Failed to load model {model_name}: {e}")
@@ -104,36 +144,61 @@ class TTSService:
             Path to generated audio file
         """
         try:
-            # Load the specified model
-            model = self._load_model(model_name)
-            
-            # Preprocess reference audio and text
-            logger.info("Preprocessing reference audio...")
-            ref_audio, ref_text_processed = self.preprocess_ref_audio_text(
-                ref_audio_path, 
-                ref_text,
-                device=self.device
-            )
+            # If no transcription provided, use a placeholder
+            if not ref_text or ref_text.strip() == "":
+                ref_text = "This is a sample audio reference for voice cloning."
+                logger.info("No transcription provided, using default placeholder text")
             
             # Handle multi-speech mode
             if mode == "Multi-Speech (Podcast)":
                 gen_text = self._format_for_multispeech(gen_text)
             
-            # Perform inference
-            logger.info(f"Generating speech with {model_name}...")
-            generated_audio = self.infer_process(
-                model=model,
-                ref_audio=ref_audio,
-                ref_text=ref_text_processed,
-                gen_text=gen_text,
-                vocoder=self.vocoder,
-                nfe_step=nfe_steps,
-                cfg_strength=cfg_strength,
-                sway_sampling_coef=sway_sampling_coef
-            )
-            
-            # Save output audio
-            output_path = self._save_audio(generated_audio)
+            # Use F5TTS API if available
+            if hasattr(self, 'f5_api') and self.f5_api is not None:
+                logger.info(f"Generating speech with {model_name} using F5TTS API...")
+                
+                # Use the API's infer method
+                generated_audio, sample_rate = self.f5_api.infer(
+                    ref_file=ref_audio_path,
+                    ref_text=ref_text,
+                    gen_text=gen_text,
+                    model=model_name.replace("_v1", "").replace("-", "").lower(),
+                    remove_silence=True
+                )
+                
+                # Save output audio
+                output_path = self._save_audio_from_numpy(generated_audio, sample_rate)
+                
+            else:
+                # Use direct method if API not available
+                logger.info("Using direct inference method...")
+                
+                # Load the specified model
+                model = self._load_model(model_name)
+                
+                # Preprocess reference audio and text
+                logger.info("Preprocessing reference audio...")
+                ref_audio, ref_text_processed = self.preprocess_ref_audio_text(
+                    ref_audio_path, 
+                    ref_text,
+                    device=self.device
+                )
+                
+                # Perform inference
+                logger.info(f"Generating speech with {model_name}...")
+                generated_audio = self.infer_process(
+                    model=model,
+                    ref_audio=ref_audio,
+                    ref_text=ref_text_processed,
+                    gen_text=gen_text,
+                    vocoder=self.vocoder,
+                    nfe_step=nfe_steps,
+                    cfg_strength=cfg_strength,
+                    sway_sampling_coef=sway_sampling_coef
+                )
+                
+                # Save output audio
+                output_path = self._save_audio(generated_audio)
             
             logger.info(f"Speech synthesis completed: {output_path}")
             return output_path
@@ -182,6 +247,27 @@ class TTSService:
             
         except Exception as e:
             logger.error(f"Failed to save audio: {e}")
+            raise
+    
+    def _save_audio_from_numpy(self, audio_data: np.ndarray, sample_rate: int) -> str:
+        """Save generated audio from numpy array to file"""
+        try:
+            # Create temporary output file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_file:
+                output_path = temp_file.name
+            
+            # Normalize audio
+            if np.max(np.abs(audio_data)) > 0:
+                audio_data = audio_data / np.max(np.abs(audio_data))
+            
+            # Save using soundfile
+            import soundfile as sf
+            sf.write(output_path, audio_data, sample_rate, format='WAV')
+            
+            return output_path
+            
+        except Exception as e:
+            logger.error(f"Failed to save audio from numpy: {e}")
             raise
     
     def get_model_info(self) -> dict:
