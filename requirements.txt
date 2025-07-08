@@ -14,6 +14,7 @@ numpy>=1.24.0
 
 # Web Framework
 streamlit>=1.28.0
+python_version = "3.10"
 
 # System Dependencies (install via system package manager):
 # - ffmpeg (required for audio processing)
