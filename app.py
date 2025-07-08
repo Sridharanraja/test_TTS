@@ -110,9 +110,8 @@ def main():
                 placeholder="Type your text here...",
                 key="manual_text_input"
             )
-            # Store in session state
-            if manual_text:
-                st.session_state.current_input_text = manual_text
+            # Always update session state with current text (even if empty)
+            st.session_state.current_input_text = manual_text
         
         with text_tab2:
             # Groq AI text generation
@@ -194,12 +193,18 @@ def main():
     # Get current input text from session state
     input_text = st.session_state.get('current_input_text', '')
     
+    # Debug display
+    st.write(f"DEBUG: Session state keys: {list(st.session_state.keys())}")
+    st.write(f"DEBUG: current_input_text in session: '{input_text}'")
+    
     # Synthesis Section
     st.header("🚀 Speech Synthesis")
     
     # Show what text will be used for synthesis
     if input_text:
         st.info(f"**Text to synthesize:** {input_text[:100]}{'...' if len(input_text) > 100 else ''}")
+    else:
+        st.warning("No text entered for synthesis")
     
     # Validation and synthesis
     synthesis_col1, synthesis_col2, synthesis_col3 = st.columns([2, 1, 2])

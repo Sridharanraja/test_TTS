@@ -149,8 +149,8 @@ class TTSService:
             
             # If no transcription provided, use a placeholder
             if not ref_text or ref_text.strip() == "":
-                ref_text = "This is a sample audio reference for voice cloning."
-                logger.info("No transcription provided, using default placeholder text")
+                ref_text = "Hello, this is a clear English voice sample for cloning."
+                logger.info("No transcription provided, using English placeholder text")
             
             # Handle multi-speech mode
             if mode == "Multi-Speech (Podcast)":
