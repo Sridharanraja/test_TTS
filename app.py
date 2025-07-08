@@ -172,11 +172,13 @@ def main():
                 
                 # Reference text input
                 ref_text = st.text_area(
-                    "Transcription of reference audio (optional)",
+                    "Transcription of reference audio (IMPORTANT for language control)",
                     height=100,
-                    placeholder="Enter what is said in the reference audio (leave empty for auto-transcription)...",
+                    placeholder="Enter what is said in the reference audio in the SAME language as your target text. This controls the output language. Leave empty only if you want auto-transcription.",
                     key="ref_text_input"
                 )
+                
+                st.info("💡 **Important**: The transcription language controls the output language. For English output, provide English transcription of your reference audio.")
         
         with audio_tab2:
             # Audio recording component
@@ -193,9 +195,7 @@ def main():
     # Get current input text from session state
     input_text = st.session_state.get('current_input_text', '')
     
-    # Debug display
-    st.write(f"DEBUG: Session state keys: {list(st.session_state.keys())}")
-    st.write(f"DEBUG: current_input_text in session: '{input_text}'")
+
     
     # Synthesis Section
     st.header("🚀 Speech Synthesis")
@@ -242,10 +242,6 @@ def main():
                     
                     # Preprocess audio
                     processed_audio_path = services['audio_service'].preprocess_audio(audio_path)
-                    
-                    # Debug logging
-                    st.write(f"DEBUG: About to synthesize with text: '{input_text}'")
-                    st.write(f"DEBUG: Text length: {len(input_text)}")
                     
                     # Synthesize speech
                     output_audio = services['tts_service'].synthesize(

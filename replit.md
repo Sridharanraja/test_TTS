@@ -134,6 +134,8 @@ This is a Streamlit-based text-to-speech (TTS) application that leverages the F5
 ```
 Changelog:
 - July 08, 2025. Initial setup
+- July 08, 2025. Fixed text input session state management
+- July 08, 2025. Fixed transcription language control issue - transcription field now properly controls output language
 ```
 
 ## User Preferences

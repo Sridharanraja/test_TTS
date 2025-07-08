@@ -144,19 +144,14 @@ class TTSService:
             Path to generated audio file
         """
         try:
-            # Debug logging - check what text we received
-            logger.info(f"TTS Service received gen_text: '{gen_text}' (length: {len(gen_text)})")
-            
-            # If no transcription provided, use a placeholder
+            # If no transcription provided, leave empty for auto-transcription
             if not ref_text or ref_text.strip() == "":
-                ref_text = "Hello, this is a clear English voice sample for cloning."
-                logger.info("No transcription provided, using English placeholder text")
+                ref_text = ""
+                logger.info("No transcription provided, using auto-transcription (may affect output language)")
             
             # Handle multi-speech mode
             if mode == "Multi-Speech (Podcast)":
                 gen_text = self._format_for_multispeech(gen_text)
-                
-            logger.info(f"Final gen_text being sent to F5TTS: '{gen_text}'")
             
             # Use F5TTS API if available
             if hasattr(self, 'f5_api') and self.f5_api is not None:
