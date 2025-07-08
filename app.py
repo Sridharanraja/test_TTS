@@ -100,9 +100,6 @@ def main():
     with col1:
         st.header("📝 Text Input")
         
-        # Initialize input_text
-        input_text = ""
-        
         # Text input tabs
         text_tab1, text_tab2 = st.tabs(["Manual Input", "AI Generate"])
         
@@ -113,8 +110,9 @@ def main():
                 placeholder="Type your text here...",
                 key="manual_text_input"
             )
+            # Store in session state
             if manual_text:
-                input_text = manual_text
+                st.session_state.current_input_text = manual_text
         
         with text_tab2:
             # Groq AI text generation
@@ -130,16 +128,12 @@ def main():
                         with st.spinner("Generating text with Groq AI..."):
                             try:
                                 generated_text = services['groq_service'].generate_text(prompt)
-                                st.session_state.generated_text = generated_text
+                                st.session_state.current_input_text = generated_text
                                 st.text_area("Generated Text", value=generated_text, height=150, key="generated_text_display")
                             except Exception as e:
                                 st.error(f"Text generation failed: {str(e)}")
                     else:
                         st.warning("Please enter a prompt for AI text generation")
-                
-                # Use generated text if available
-                if 'generated_text' in st.session_state:
-                    input_text = st.session_state.generated_text
                     
             else:
                 st.warning("⚠️ AI Text Generation Unavailable")
@@ -156,11 +150,7 @@ def main():
                 
                 for i, sample in enumerate(sample_texts):
                     if st.button(f"Use Sample {i+1}", key=f"sample_{i}"):
-                        st.session_state.sample_text = sample
-                
-                if 'sample_text' in st.session_state:
-                    st.text_area("Selected Sample Text", value=st.session_state.sample_text, height=100, key="sample_display")
-                    input_text = st.session_state.sample_text
+                        st.session_state.current_input_text = sample
     
     with col2:
         st.header("🎵 Audio Reference")
@@ -200,6 +190,9 @@ def main():
             # Placeholder for recorded audio
             if 'recorded_audio' in st.session_state:
                 st.audio(st.session_state.recorded_audio)
+    
+    # Get current input text from session state
+    input_text = st.session_state.get('current_input_text', '')
     
     # Synthesis Section
     st.header("🚀 Speech Synthesis")
