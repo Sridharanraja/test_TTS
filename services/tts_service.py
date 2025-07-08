@@ -158,12 +158,25 @@ class TTSService:
                 logger.info(f"Generating speech with {model_name} using F5TTS API...")
                 
                 # Use the API's infer method (without model parameter)
-                generated_audio, sample_rate = self.f5_api.infer(
+                result = self.f5_api.infer(
                     ref_file=ref_audio_path,
                     ref_text=ref_text,
                     gen_text=gen_text,
                     remove_silence=True
                 )
+                
+                # Handle different return formats
+                if isinstance(result, tuple):
+                    if len(result) == 2:
+                        generated_audio, sample_rate = result
+                    else:
+                        # More than 2 values returned, take first two
+                        generated_audio = result[0]
+                        sample_rate = result[1] if len(result) > 1 else self.sample_rate
+                else:
+                    # Single value returned (just audio)
+                    generated_audio = result
+                    sample_rate = self.sample_rate
                 
                 # Save output audio
                 output_path = self._save_audio_from_numpy(generated_audio, sample_rate)
