@@ -2,7 +2,7 @@ modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["libsndfile", "pkg-config"]
+packages = ["libsndfile", "pkg-config", "ffmpeg"]
 
 [deployment]
 deploymentTarget = "autoscale"
